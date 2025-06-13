@@ -34,30 +34,40 @@ function setupLoadingScreen() {
     const loadingPercentage = document.querySelector('.loading-percentage');
     const body = document.body;
 
+    if (!loadingScreen || !loadingProgress || !loadingPercentage) {
+        console.error('Loading screen elements not found!');
+        return;
+    }
+
     // Add loading class to body
     body.classList.add('loading');
 
+    // Track start time to ensure minimum duration
+    const startTime = Date.now();
+    const minimumDuration = 3000; // 3 seconds minimum
+
     let progress = 0;
-    const duration = 2000; // Reduced to 2 seconds for better UX
+    const duration = 3000; // Minimum 3 seconds duration
     const interval = 50; // Update every 50ms for smoother animation
     const increment = (100 / (duration / interval));
 
-    // Simulate realistic loading stages
+    // Simulate realistic loading stages with slower progression
     const loadingStages = [
-        { end: 30, speed: 2.0, label: "Initializing..." },
-        { end: 60, speed: 1.5, label: "Loading assets..." },
-        { end: 85, speed: 1.2, label: "Setting up..." },
-        { end: 100, speed: 0.8, label: "Complete!" }
+        { end: 25, speed: 1.5, label: "Initializing..." },
+        { end: 50, speed: 1.2, label: "Loading assets..." },
+        { end: 75, speed: 1.0, label: "Setting up..." },
+        { end: 95, speed: 0.8, label: "Finalizing..." },
+        { end: 100, speed: 0.6, label: "Complete!" }
     ];
 
     let currentStage = 0;
     let progressInterval;
 
-    // Add fallback timer to ensure loading completes
+    // Add fallback timer to ensure loading completes (after minimum duration)
     const fallbackTimer = setTimeout(() => {
         console.warn('Loading screen fallback triggered');
         completeLoading();
-    }, 5000); // 5 second fallback
+    }, 6000); // 6 second fallback (after minimum 3 seconds + buffer)
 
     progressInterval = setInterval(() => {
         const stage = loadingStages[currentStage];
@@ -80,6 +90,12 @@ function setupLoadingScreen() {
                 loadingProgress.style.width = progress + '%';
                 loadingPercentage.textContent = Math.floor(progress) + '%';
 
+                // Update final accessibility attributes
+                const progressBar = document.querySelector('.loading-bar');
+                if (progressBar) {
+                    progressBar.setAttribute('aria-valuenow', '100');
+                }
+
                 // Add completion effect
                 loadingPercentage.style.transform = 'scale(1.2)';
                 loadingPercentage.style.color = 'var(--secondary-color)';
@@ -91,7 +107,7 @@ function setupLoadingScreen() {
                 // Hold at 100% for dramatic effect
                 setTimeout(() => {
                     completeLoading();
-                }, 600); // Reduced hold time
+                }, 1000); // Hold for 1 second at 100%
                 return;
             }
         }
@@ -99,6 +115,12 @@ function setupLoadingScreen() {
         // Update progress bar and percentage
         loadingProgress.style.width = progress + '%';
         loadingPercentage.textContent = Math.floor(progress) + '%';
+
+        // Update accessibility attributes
+        const progressBar = document.querySelector('.loading-bar');
+        if (progressBar) {
+            progressBar.setAttribute('aria-valuenow', Math.floor(progress));
+        }
 
         // Add milestone effects
         const currentPercent = Math.floor(progress);
@@ -111,6 +133,22 @@ function setupLoadingScreen() {
     }, interval);
 
     function completeLoading() {
+        // Check if minimum duration has passed
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, minimumDuration - elapsedTime);
+
+        if (remainingTime > 0) {
+            // Wait for remaining time before completing
+            setTimeout(() => {
+                actuallyCompleteLoading();
+            }, remainingTime);
+        } else {
+            // Minimum duration has passed, complete immediately
+            actuallyCompleteLoading();
+        }
+    }
+
+    function actuallyCompleteLoading() {
         // Clear any remaining timers
         clearInterval(progressInterval);
         clearTimeout(fallbackTimer);
@@ -128,27 +166,45 @@ function setupLoadingScreen() {
         }, 800);
     }
 
-    // Skip loading on click (for development/testing)
+    // Skip loading on click (but respect minimum duration)
     loadingScreen.addEventListener('click', () => {
         if (!loadingScreen.classList.contains('fade-out')) {
-            completeLoading();
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime >= minimumDuration) {
+                completeLoading();
+            } else {
+                // Show a subtle indication that minimum time hasn't passed
+                loadingPercentage.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    loadingPercentage.style.transform = 'scale(1)';
+                }, 200);
+            }
         }
     });
 
-    // Skip loading on any key press
+    // Skip loading on any key press (but respect minimum duration)
     document.addEventListener('keydown', () => {
         if (!loadingScreen.classList.contains('fade-out')) {
-            completeLoading();
+            const elapsedTime = Date.now() - startTime;
+            if (elapsedTime >= minimumDuration) {
+                completeLoading();
+            } else {
+                // Show a subtle indication that minimum time hasn't passed
+                loadingPercentage.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    loadingPercentage.style.transform = 'scale(1)';
+                }, 200);
+            }
         }
     });
 
-    // Auto-skip after DOM is fully loaded
+    // Auto-skip after DOM is fully loaded (but respect minimum duration)
     if (document.readyState === 'complete') {
         setTimeout(() => {
             if (!loadingScreen.classList.contains('fade-out')) {
                 completeLoading();
             }
-        }, 1000); // Skip after 1 second if page is already loaded
+        }, 3500); // Skip after 3.5 seconds minimum if page is already loaded
     }
 }
 
@@ -612,9 +668,17 @@ function setupMobileMenu() {
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
 
-    if (!hamburger || !navLinks) return;
+    if (!hamburger || !navLinks) {
+        console.error('Mobile menu elements not found:', { hamburger, navLinks });
+        return;
+    }
 
-    hamburger.addEventListener('click', () => {
+    console.log('Mobile menu setup successful');
+
+    hamburger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Hamburger clicked');
         hamburger.classList.toggle('active');
         navLinks.classList.toggle('active');
         document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
@@ -710,7 +774,7 @@ window.addEventListener('load', () => {
 
     // Trigger initial animations
     setTimeout(() => {
-        document.querySelectorAll('.loading').forEach(el => {
+        document.querySelectorAll('.content-loading').forEach(el => {
             el.classList.add('loaded');
         });
     }, 500);
