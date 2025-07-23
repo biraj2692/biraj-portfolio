@@ -1,4 +1,10 @@
-// ===== INITIALIZATION =====
+// ===== GSAP INITIALIZATION =====
+// Register ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
+
+// Global GSAP timeline
+let masterTimeline = gsap.timeline();
+
 document.addEventListener('DOMContentLoaded', function() {
     // Add emergency fallback to ensure content is always visible
     setTimeout(() => {
@@ -6,9 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const body = document.body;
         if (loadingScreen && !loadingScreen.classList.contains('fade-out')) {
             console.warn('Emergency fallback: Removing loading screen');
-            loadingScreen.style.display = 'none';
-            body.classList.remove('loading');
-            initializeWebsite();
+            gsap.to(loadingScreen, { opacity: 0, duration: 0.5, onComplete: () => {
+                loadingScreen.style.display = 'none';
+                body.classList.remove('loading');
+                initializeWebsite();
+            }});
         }
     }, 8000); // 8 second emergency fallback
 
@@ -25,13 +33,212 @@ function initializeWebsite() {
     setupMobileMenu();
     setupHeaderScroll();
     setupThemeToggle();
+    initializeGSAPAnimations();
 }
 
-// ===== LOADING SCREEN =====
+// ===== GSAP ANIMATIONS INITIALIZATION =====
+function initializeGSAPAnimations() {
+    // Hero section animations
+    animateHeroSection();
+
+    // Scroll-triggered animations
+    setupScrollTriggerAnimations();
+
+    // Parallax effects
+    setupParallaxEffects();
+}
+
+// ===== HERO SECTION ANIMATIONS =====
+function animateHeroSection() {
+    const heroContent = document.querySelector('.hero-content');
+    const heroTitle = document.querySelector('.hero-content h1');
+    const heroSubtitle = document.querySelector('.hero-content p');
+    const heroCTA = document.querySelector('.hero-cta');
+    const socialLinks = document.querySelector('.social-links');
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+
+    if (!heroContent) return;
+
+    // Create timeline for hero animations
+    const heroTL = gsap.timeline({ delay: 0.5 });
+
+    // Set initial states
+    gsap.set([heroTitle, heroSubtitle, heroCTA, socialLinks, scrollIndicator], {
+        opacity: 0,
+        y: 30
+    });
+
+    // Animate elements in sequence
+    heroTL
+        .to(heroTitle, {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power2.out"
+        })
+        .to(heroSubtitle, {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out"
+        }, "-=0.5")
+        .to(heroCTA, {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out"
+        }, "-=0.3")
+        .to(socialLinks, {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out"
+        }, "-=0.3")
+        .to(scrollIndicator, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power2.out"
+        }, "-=0.2");
+
+    // Animate social icons individually
+    gsap.to('.social-icon', {
+        y: -3,
+        duration: 0.3,
+        ease: "power2.out",
+        stagger: 0.1,
+        paused: true,
+        id: "socialHover"
+    });
+}
+
+// ===== SCROLL TRIGGER ANIMATIONS =====
+function setupScrollTriggerAnimations() {
+    // Fade in animations for sections
+    gsap.utils.toArray('.fade-in, section').forEach((element) => {
+        gsap.fromTo(element,
+            {
+                opacity: 0,
+                y: 50
+            },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 1,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: element,
+                    start: "top 80%",
+                    end: "bottom 20%",
+                    toggleActions: "play none none reverse"
+                }
+            }
+        );
+    });
+
+    // Skill bars animation
+    gsap.utils.toArray('.progress-bar').forEach((bar) => {
+        const targetWidth = bar.getAttribute('data-width');
+
+        gsap.fromTo(bar,
+            { width: '0%' },
+            {
+                width: targetWidth,
+                duration: 1.5,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: bar,
+                    start: "top 80%",
+                    toggleActions: "play none none reverse"
+                }
+            }
+        );
+    });
+
+    // Project cards stagger animation
+    gsap.utils.toArray('.project-card').forEach((card, index) => {
+        gsap.fromTo(card,
+            {
+                opacity: 0,
+                y: 30,
+                scale: 0.9
+            },
+            {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.8,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: card,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                delay: index * 0.1
+            }
+        );
+    });
+
+    // Contact items animation
+    gsap.utils.toArray('.contact-item').forEach((item, index) => {
+        gsap.fromTo(item,
+            {
+                opacity: 0,
+                x: -30
+            },
+            {
+                opacity: 1,
+                x: 0,
+                duration: 0.8,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: item,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                delay: index * 0.2
+            }
+        );
+    });
+}
+
+// ===== PARALLAX EFFECTS =====
+function setupParallaxEffects() {
+    // Hero parallax
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        gsap.to(hero, {
+            yPercent: -50,
+            ease: "none",
+            scrollTrigger: {
+                trigger: hero,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true
+            }
+        });
+    }
+
+    // Floating animation for scroll indicator
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    if (scrollIndicator) {
+        gsap.to(scrollIndicator, {
+            y: 10,
+            duration: 2,
+            ease: "power2.inOut",
+            repeat: -1,
+            yoyo: true
+        });
+    }
+}
+
+// ===== LOADING SCREEN WITH GSAP =====
 function setupLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');
     const loadingProgress = document.querySelector('.loading-progress');
     const loadingPercentage = document.querySelector('.loading-percentage');
+    const loadingLogo = document.querySelector('.loading-logo');
+    const loadingDots = document.querySelector('.loading-dots');
     const body = document.body;
 
     if (!loadingScreen || !loadingProgress || !loadingPercentage) {
@@ -42,169 +249,151 @@ function setupLoadingScreen() {
     // Add loading class to body
     body.classList.add('loading');
 
-    // Track start time to ensure minimum duration
+    // GSAP Timeline for loading animations
+    const loadingTL = gsap.timeline();
+
+    // Initial setup - hide elements
+    gsap.set([loadingLogo, loadingProgress.parentElement, loadingDots], {
+        opacity: 0,
+        y: 30
+    });
+
+    // Animate loading elements in sequence
+    loadingTL
+        .to(loadingLogo, {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power2.out"
+        })
+        .to(loadingProgress.parentElement, {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "power2.out"
+        }, "-=0.5")
+        .to(loadingDots, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power2.out"
+        }, "-=0.3");
+
+    // Animate loading dots with GSAP
+    gsap.to(loadingDots.children, {
+        y: -10,
+        duration: 0.6,
+        ease: "power2.inOut",
+        stagger: 0.1,
+        repeat: -1,
+        yoyo: true
+    });
+
+    // Progress animation with GSAP
+    const progressObj = { value: 0 };
+    const minimumDuration = 3000;
     const startTime = Date.now();
-    const minimumDuration = 3000; // 3 seconds minimum
 
-    let progress = 0;
-    const duration = 3000; // Minimum 3 seconds duration
-    const interval = 50; // Update every 50ms for smoother animation
-    const increment = (100 / (duration / interval));
+    gsap.to(progressObj, {
+        value: 100,
+        duration: 3,
+        ease: "power2.inOut",
+        onUpdate: function() {
+            const progress = Math.floor(progressObj.value);
+            loadingProgress.style.width = progress + '%';
+            loadingPercentage.textContent = progress + '%';
 
-    // Simulate realistic loading stages with slower progression
-    const loadingStages = [
-        { end: 25, speed: 1.5, label: "Initializing..." },
-        { end: 50, speed: 1.2, label: "Loading assets..." },
-        { end: 75, speed: 1.0, label: "Setting up..." },
-        { end: 95, speed: 0.8, label: "Finalizing..." },
-        { end: 100, speed: 0.6, label: "Complete!" }
-    ];
+            // Update accessibility
+            const progressBar = document.querySelector('.loading-bar');
+            if (progressBar) {
+                progressBar.setAttribute('aria-valuenow', progress);
+            }
 
-    let currentStage = 0;
-    let progressInterval;
+            // Milestone effects with GSAP
+            if (progress % 25 === 0 && progress > 0 && progress < 100) {
+                gsap.to(loadingPercentage, {
+                    scale: 1.1,
+                    duration: 0.2,
+                    yoyo: true,
+                    repeat: 1,
+                    ease: "power2.inOut"
+                });
+            }
+        },
+        onComplete: function() {
+            // Completion effect with GSAP
+            gsap.to(loadingPercentage, {
+                scale: 1.2,
+                color: "var(--secondary-color)",
+                textShadow: "0 0 20px rgba(255, 215, 0, 0.8)",
+                duration: 0.5,
+                ease: "power2.out",
+                onComplete: () => {
+                    setTimeout(() => completeLoading(), 1000);
+                }
+            });
+        }
+    });
 
-    // Add fallback timer to ensure loading completes (after minimum duration)
+    // Fallback timer
     const fallbackTimer = setTimeout(() => {
         console.warn('Loading screen fallback triggered');
         completeLoading();
-    }, 6000); // 6 second fallback (after minimum 3 seconds + buffer)
-
-    progressInterval = setInterval(() => {
-        const stage = loadingStages[currentStage];
-
-        // Calculate increment based on current stage
-        let stageIncrement = increment * stage.speed;
-
-        // Add some randomness for realism
-        const randomFactor = Math.random() * 0.3;
-        progress += stageIncrement + randomFactor;
-
-        // Check if we've reached the current stage end
-        if (progress >= stage.end) {
-            progress = stage.end;
-            currentStage++;
-
-            // If we've completed all stages
-            if (currentStage >= loadingStages.length) {
-                progress = 100;
-                loadingProgress.style.width = progress + '%';
-                loadingPercentage.textContent = Math.floor(progress) + '%';
-
-                // Update final accessibility attributes
-                const progressBar = document.querySelector('.loading-bar');
-                if (progressBar) {
-                    progressBar.setAttribute('aria-valuenow', '100');
-                }
-
-                // Add completion effect
-                loadingPercentage.style.transform = 'scale(1.2)';
-                loadingPercentage.style.color = 'var(--secondary-color)';
-                loadingPercentage.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
-
-                clearInterval(progressInterval);
-                clearTimeout(fallbackTimer);
-
-                // Hold at 100% for dramatic effect
-                setTimeout(() => {
-                    completeLoading();
-                }, 1000); // Hold for 1 second at 100%
-                return;
-            }
-        }
-
-        // Update progress bar and percentage
-        loadingProgress.style.width = progress + '%';
-        loadingPercentage.textContent = Math.floor(progress) + '%';
-
-        // Update accessibility attributes
-        const progressBar = document.querySelector('.loading-bar');
-        if (progressBar) {
-            progressBar.setAttribute('aria-valuenow', Math.floor(progress));
-        }
-
-        // Add milestone effects
-        const currentPercent = Math.floor(progress);
-        if (currentPercent % 25 === 0 && currentPercent > 0 && currentPercent < 100) {
-            loadingPercentage.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                loadingPercentage.style.transform = 'scale(1)';
-            }, 200);
-        }
-    }, interval);
+    }, 6000);
 
     function completeLoading() {
-        // Check if minimum duration has passed
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.max(0, minimumDuration - elapsedTime);
 
         if (remainingTime > 0) {
-            // Wait for remaining time before completing
-            setTimeout(() => {
-                actuallyCompleteLoading();
-            }, remainingTime);
+            setTimeout(() => actuallyCompleteLoading(), remainingTime);
         } else {
-            // Minimum duration has passed, complete immediately
             actuallyCompleteLoading();
         }
     }
 
     function actuallyCompleteLoading() {
-        // Clear any remaining timers
-        clearInterval(progressInterval);
         clearTimeout(fallbackTimer);
 
-        // Fade out loading screen
-        loadingScreen.classList.add('fade-out');
-
-        // Remove loading class from body immediately
-        body.classList.remove('loading');
-
-        // Initialize website after loading
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-            initializeWebsite();
-        }, 800);
+        // GSAP fade out animation
+        gsap.to(loadingScreen, {
+            opacity: 0,
+            duration: 0.8,
+            ease: "power2.inOut",
+            onComplete: () => {
+                loadingScreen.style.display = 'none';
+                body.classList.remove('loading');
+                initializeWebsite();
+            }
+        });
     }
 
-    // Skip loading on click (but respect minimum duration)
-    loadingScreen.addEventListener('click', () => {
-        if (!loadingScreen.classList.contains('fade-out')) {
-            const elapsedTime = Date.now() - startTime;
-            if (elapsedTime >= minimumDuration) {
-                completeLoading();
-            } else {
-                // Show a subtle indication that minimum time hasn't passed
-                loadingPercentage.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    loadingPercentage.style.transform = 'scale(1)';
-                }, 200);
-            }
+    // Skip loading interactions with GSAP
+    const handleSkip = () => {
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime >= minimumDuration) {
+            completeLoading();
+        } else {
+            gsap.to(loadingPercentage, {
+                scale: 1.1,
+                duration: 0.2,
+                yoyo: true,
+                repeat: 1,
+                ease: "power2.inOut"
+            });
         }
-    });
+    };
 
-    // Skip loading on any key press (but respect minimum duration)
-    document.addEventListener('keydown', () => {
-        if (!loadingScreen.classList.contains('fade-out')) {
-            const elapsedTime = Date.now() - startTime;
-            if (elapsedTime >= minimumDuration) {
-                completeLoading();
-            } else {
-                // Show a subtle indication that minimum time hasn't passed
-                loadingPercentage.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    loadingPercentage.style.transform = 'scale(1)';
-                }, 200);
-            }
-        }
-    });
+    loadingScreen.addEventListener('click', handleSkip);
+    document.addEventListener('keydown', handleSkip);
 
-    // Auto-skip after DOM is fully loaded (but respect minimum duration)
+    // Auto-skip after DOM loaded
     if (document.readyState === 'complete') {
         setTimeout(() => {
-            if (!loadingScreen.classList.contains('fade-out')) {
+            if (loadingScreen.style.display !== 'none') {
                 completeLoading();
             }
-        }, 3500); // Skip after 3.5 seconds minimum if page is already loaded
+        }, 3500);
     }
 }
 
@@ -313,7 +502,7 @@ function updateNavOnScroll() {
     });
 }
 
-// ===== CUSTOM CURSOR =====
+// ===== CUSTOM CURSOR WITH GSAP =====
 function setupCustomCursor() {
     const cursor = document.querySelector('.cursor');
     const cursorFollower = document.querySelector('.cursor-follower');
@@ -321,43 +510,32 @@ function setupCustomCursor() {
     if (!cursor || !cursorFollower) return;
 
     let mouseX = 0, mouseY = 0;
-    let followerX = 0, followerY = 0;
-    let isMoving = false;
-    let moveTimeout;
 
-    // Update cursor position
+    // Update cursor position with GSAP
     document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
 
-        cursor.style.left = mouseX + 'px';
-        cursor.style.top = mouseY + 'px';
+        // Animate cursor with GSAP for smoother movement
+        gsap.to(cursor, {
+            left: mouseX,
+            top: mouseY,
+            duration: 0.1,
+            ease: "power2.out"
+        });
 
-        // Add moving state
-        if (!isMoving) {
-            isMoving = true;
-            cursor.style.opacity = '1';
-            cursorFollower.style.opacity = '0.6';
-        }
+        // Animate follower with GSAP
+        gsap.to(cursorFollower, {
+            left: mouseX,
+            top: mouseY,
+            duration: 0.3,
+            ease: "power2.out"
+        });
 
-        clearTimeout(moveTimeout);
-        moveTimeout = setTimeout(() => {
-            isMoving = false;
-        }, 100);
+        // Update opacity states
+        gsap.to(cursor, { opacity: 1, duration: 0.2 });
+        gsap.to(cursorFollower, { opacity: 0.6, duration: 0.2 });
     });
-
-    // Smooth follower animation with easing
-    function animateFollower() {
-        const ease = 0.15;
-        followerX += (mouseX - followerX) * ease;
-        followerY += (mouseY - followerY) * ease;
-
-        cursorFollower.style.left = followerX + 'px';
-        cursorFollower.style.top = followerY + 'px';
-
-        requestAnimationFrame(animateFollower);
-    }
-    animateFollower();
 
     // Enhanced hover effects for different element types
     const hoverElements = document.querySelectorAll('a, button, .project-card, .skill-item, .contact-item, .filter-btn, #themeToggle');
@@ -500,58 +678,26 @@ function setupCustomCursor() {
     });
 }
 
-// ===== SCROLL ANIMATIONS =====
+// ===== SCROLL ANIMATIONS WITH GSAP =====
 function setupScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-
-                // Trigger skill bar animations
-                if (entry.target.classList.contains('skills')) {
-                    animateSkillBars();
-                }
-            }
-        });
-    }, observerOptions);
-
-    // Observe fade-in elements
-    document.querySelectorAll('.fade-in, .reveal').forEach(el => {
-        observer.observe(el);
-    });
-
-    // Observe sections
-    document.querySelectorAll('section').forEach(section => {
-        observer.observe(section);
-    });
+    // This function is now handled by setupScrollTriggerAnimations()
+    // Keeping for compatibility but GSAP ScrollTrigger handles all scroll animations
+    console.log('Scroll animations now handled by GSAP ScrollTrigger');
 }
 
-// ===== SKILL BARS =====
+// ===== SKILL BARS WITH GSAP =====
 function setupSkillBars() {
-    const skillBars = document.querySelectorAll('.progress-bar');
-    skillBars.forEach(bar => {
-        bar.style.width = '0%';
-    });
+    // Set initial state with GSAP
+    gsap.set('.progress-bar', { width: '0%' });
 }
 
 function animateSkillBars() {
-    const skillBars = document.querySelectorAll('.progress-bar');
-
-    skillBars.forEach((bar, index) => {
-        const targetWidth = bar.getAttribute('data-width');
-
-        setTimeout(() => {
-            bar.style.width = targetWidth;
-        }, index * 200);
-    });
+    // This is now handled by setupScrollTriggerAnimations()
+    // Keeping for compatibility
+    console.log('Skill bar animations now handled by GSAP ScrollTrigger');
 }
 
-// ===== PROJECT FILTERS =====
+// ===== PROJECT FILTERS WITH GSAP =====
 function setupProjectFilters() {
     const filterButtons = document.querySelectorAll('.filter-btn');
     const projectCards = document.querySelectorAll('.project-card');
@@ -560,21 +706,51 @@ function setupProjectFilters() {
         button.addEventListener('click', () => {
             const filter = button.getAttribute('data-filter');
 
-            // Update active filter button
-            filterButtons.forEach(btn => btn.classList.remove('active'));
+            // Update active filter button with GSAP
+            filterButtons.forEach(btn => {
+                gsap.to(btn, {
+                    scale: btn === button ? 1.05 : 1,
+                    duration: 0.2,
+                    ease: "power2.out"
+                });
+                btn.classList.remove('active');
+            });
             button.classList.add('active');
 
-            // Filter projects with animation
+            // Filter projects with GSAP animations
             projectCards.forEach((card, index) => {
                 const category = card.getAttribute('data-category');
+                const shouldShow = filter === 'all' || category === filter;
 
-                setTimeout(() => {
-                    if (filter === 'all' || category === filter) {
-                        card.classList.remove('hidden');
-                    } else {
-                        card.classList.add('hidden');
-                    }
-                }, index * 100);
+                if (shouldShow) {
+                    // Show card with animation
+                    gsap.to(card, {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "power2.out",
+                        delay: index * 0.1,
+                        onStart: () => {
+                            card.classList.remove('hidden');
+                            card.style.pointerEvents = 'auto';
+                        }
+                    });
+                } else {
+                    // Hide card with animation
+                    gsap.to(card, {
+                        opacity: 0,
+                        scale: 0.8,
+                        y: 20,
+                        duration: 0.4,
+                        ease: "power2.in",
+                        delay: index * 0.05,
+                        onComplete: () => {
+                            card.classList.add('hidden');
+                            card.style.pointerEvents = 'none';
+                        }
+                    });
+                }
             });
         });
     });
@@ -642,25 +818,39 @@ function showNotification(message, type) {
         color: 'white',
         fontWeight: '500',
         zIndex: '10000',
-        transform: 'translateX(100%)',
-        transition: 'transform 0.3s ease',
         backgroundColor: type === 'success' ? '#10b981' : '#ef4444'
     });
 
     document.body.appendChild(notification);
 
-    // Animate in
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
+    // GSAP animation for notification
+    gsap.fromTo(notification,
+        {
+            x: 100,
+            opacity: 0,
+            scale: 0.8
+        },
+        {
+            x: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.5,
+            ease: "back.out(1.7)"
+        }
+    );
 
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
+    // Remove after 3 seconds with GSAP
+    gsap.to(notification, {
+        x: 100,
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.3,
+        ease: "power2.in",
+        delay: 3,
+        onComplete: () => {
             document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
+        }
+    });
 }
 
 // ===== MOBILE MENU =====
